@@ -1,4 +1,12 @@
 window.onload = function() {
+	document.addEventListener('keydown', function(e) {
+		switch(e.code){
+			case 'ControlLeft':
+				game.editMode = !game.editMode;
+				game.pFIndex = null;
+				break;
+		}
+	});
 	document.addEventListener('contextmenu', event => event.preventDefault());
 	document.addEventListener('mousedown', function(e) {
 		if (e.button == 1) {
@@ -30,6 +38,10 @@ window.onload = function() {
 			this.pM = new Point(Math.abs(this.pA.x + this.pB.x) / 2, Math.abs(this.pA.y + this.pB.y) / 2);
 			this.length = Math.sqrt((this.pA.x - this.pB.x) ** 2 + (this.pA.y - mouse.y) ** 2);
 		}
+		update() {
+			this.pM = new Point(Math.abs(this.pA.x + this.pB.x) / 2, Math.abs(this.pA.y + this.pB.y) / 2);
+			this.length = Math.sqrt((this.pA.x - this.pB.x) ** 2 + (this.pA.y - mouse.y) ** 2);
+		}
 		draw() {
 			ctx.beginPath();
 			ctx.moveTo(this.pA.x, this.pA.y);
@@ -57,11 +69,14 @@ window.onload = function() {
 			ctx.beginPath();
 			ctx.arc(this.x, this.y, pointR, 0, 2 * Math.PI);
 			ctx.lineWidth = '3';
-			if (this.fixed) {
-				ctx.fillStyle = 'red';
+			if (game.editMode) {
+				ctx.fillStyle = 'white';
 			}
 			else if(this.inUse) {
 				ctx.fillStyle = 'green';
+			}
+			else if (this.fixed) {
+				ctx.fillStyle = 'red';
 			}
 			else {
 				ctx.fillStyle = 'blue';
@@ -75,6 +90,25 @@ window.onload = function() {
 			this.points = new Array;
 			this.lines = new Array;
 			this.pFirst = null;
+			this.editMode = false;
+			this.pFIndex = null;
+			//grid creation
+			/*let nhor = 17;
+			let nvert = 4
+			for (let i1 = 0; i1 < nvert; i1++) {
+				for (let i2 = 0; i2 < nhor; i2++) {
+					this.points.push(new Point(200 + 100 * i2, 150 + 100 * i1));
+					if (i2 != 0) {
+						this.lines.push(new Line(this.points[i1 * nhor + i2], this.points[i1 * nhor + i2 - 1]))
+					}
+					if (i1 != 0) {
+						this.lines.push(new Line(this.points[i1 * nhor + i2], this.points[i1 * nhor + i2 - nhor]))
+					}
+					if (i1 == 0 && i2 % 4 == 0) {
+						this.points[i2].fixed = true;
+					}
+				}
+			}*/
 		}
 		pointClicked(factor = 1) {
 			let distance;
@@ -118,67 +152,88 @@ window.onload = function() {
 			});
 			this.actions();
 		}
+		applyFabrik() {
+			
+		}
 		actions() {
-			switch (mouse.state) { 
-
-				// !!!!! find a way to move a point
-
-				case 0: // left
-					mouse.state = null;
-					let pClicked = this.pointClicked(2);
-					if (pClicked != null) {
-						let pIndex = this.pointClicked();
-						if (pIndex != null)
-							this.points[pIndex].fixed = !this.points[pIndex].fixed; // toggle point
-					}
-					else
-						this.points.push(new Point(mouse.x, mouse.y)) // create point
-					break;
-				case 2: // right
-					mouse.state = null;
-					let pIndex = this.pointClicked();
-					if (pIndex != null) {
-						for (let i = 0; i < this.lines.length; i++) {
-							if (this.lines[i].pA == this.points[pIndex]
-							|| this.lines[i].pB == this.points[pIndex]) {
-								this.lines.splice(i, 1); // delete point's lines
-								i--;
-							}
-						}
-						this.points.splice(pIndex, 1); // delete point
+			let pIndex;
+			if (this.editMode) {
+				if (this.pFirst != null) {
+					this.points[this.pFirst].inUse = false;
+					this.pFirst = null;
+				}
+				if (mouse.state == 0) {
+					if (this.pFIndex != null) {
+						this.points[this.pFIndex].x = mouse.x;
+						this.points[this.pFIndex].y = mouse.y;
+						this.lines.forEach(line => {
+							if (line.pA == this.points[this.pFIndex]
+								|| line.pB == this.points[this.pFIndex])
+								line.update();
+						});
 					}
 					else {
-						let lIndex = this.lineClicked();
-						if (lIndex != null)
-							this.lines.splice(lIndex, 1);
+						pIndex = this.pointClicked();
+						this.pFIndex = pIndex; // point follow
 					}
-					break;
-				case 1: // middle
-					mouse.state = null;
-					if (this.pFirst == null) {
-						let delline = false;
-						if (delline) { // delete line
-							
+				}
+				else if (this.pFIndex != null){
+					this.pFIndex = null;
+				}
+			}
+			else {
+				switch (mouse.state) { 
+					case 0: // left
+						mouse.state = null;
+						let isClicked = this.pointClicked(2);
+						if (isClicked != null) {
+							pIndex = this.pointClicked();
+							if (pIndex != null)
+								this.points[pIndex].fixed = !this.points[pIndex].fixed; // toggle point
 						}
-						else { // first line point
-							let pIndex = this.pointClicked();
+						else
+							this.points.push(new Point(mouse.x, mouse.y)) // create point
+						break;
+					case 2: // right
+						pIndex = this.pointClicked();
+						if (pIndex != null) {
+							for (let i = 0; i < this.lines.length; i++) {
+								if (this.lines[i].pA == this.points[pIndex]
+								|| this.lines[i].pB == this.points[pIndex]) {
+									this.lines.splice(i, 1); // delete point's lines
+									i--;
+								}
+							}
+							this.points.splice(pIndex, 1); // delete point
+							mouse.state = null;
+						}
+						else {
+							let lIndex = this.lineClicked();
+							if (lIndex != null) 
+								this.lines.splice(lIndex, 1); // delete line
+						}
+						break;
+					case 1: // middle
+						mouse.state = null;
+						if (this.pFirst == null) { // first line point
+							pIndex = this.pointClicked();
 							if (pIndex != null) {
 								this.pFirst = pIndex;
 								this.points[pIndex].inUse = true;
 							}
 						}
-					}
-					else {
-						let pIndex = this.pointClicked(1.5);
-						if (pIndex != null && pIndex != this.pFirst) {
-							this.newLine(pIndex);
+						else {
+							pIndex = this.pointClicked(1.5);
+							if (pIndex != null && pIndex != this.pFirst) {
+								this.newLine(pIndex);
+							}
+							else if(pIndex == null) {
+								this.points[this.pFirst].inUse = false;
+								this.pFirst = null;
+							}
 						}
-						else if(pIndex == null) {
-							this.points[this.pFirst].inUse = false;
-							this.pFirst = null;
-						}
-					}
-					break;
+						break;
+				}
 			}
 		}
 	}
