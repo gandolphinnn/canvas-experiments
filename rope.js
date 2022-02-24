@@ -2,8 +2,22 @@ window.onload = function() {
 	document.addEventListener('keydown', function(e) {
 		switch(e.code){
 			case 'ControlLeft':
-				game.editMode = !game.editMode;
-				game.pFIndex = null;
+				if (game.mode == null) {
+					game.mode = 'edit';
+					game.pFIndex = null;
+				}
+				else if(game.mode == 'edit') {
+					game.mode = null;
+				}
+				break;
+			case 'Enter':
+				if (game.mode == null) {
+					game.mode = 'play';
+					game.pFIndex = null;
+				}
+				else if(game.mode == 'play') {
+					game.mode = null;
+				}
 				break;
 		}
 	});
@@ -69,7 +83,7 @@ window.onload = function() {
 			ctx.beginPath();
 			ctx.arc(this.x, this.y, pointR, 0, 2 * Math.PI);
 			ctx.lineWidth = '3';
-			if (game.editMode) {
+			if (game.mode == 'edit') {
 				ctx.fillStyle = 'white';
 			}
 			else if(this.inUse) {
@@ -90,7 +104,7 @@ window.onload = function() {
 			this.points = new Array;
 			this.lines = new Array;
 			this.pFirst = null;
-			this.editMode = false;
+			this.mode = null;
 			this.pFIndex = null;
 			//grid creation
 			/*let nhor = 17;
@@ -108,7 +122,7 @@ window.onload = function() {
 						this.points[i2].fixed = true;
 					}
 				}
-			}*/
+			}/**/
 		}
 		pointClicked(factor = 1) {
 			let distance;
@@ -153,11 +167,22 @@ window.onload = function() {
 			this.actions();
 		}
 		applyFabrik() {
-			
+			/*for (let i = 0; i < 10; i++) {
+
+			}*/
 		}
 		actions() {
 			let pIndex;
-			if (this.editMode) {
+			if (this.mode == 'play') {
+				window_body.style.backgroundColor = '#49ad9b';
+				/*if (mouse.state) {
+					
+				}
+				
+				applyFabrik(); // ?
+				*/
+			}
+			else if (this.mode == 'edit') {
 				if (this.pFirst != null) {
 					this.points[this.pFirst].inUse = false;
 					this.pFirst = null;
@@ -174,7 +199,8 @@ window.onload = function() {
 					}
 					else {
 						pIndex = this.pointClicked();
-						this.pFIndex = pIndex; // point follow
+						if (!this.points[pIndex].fixed)
+							this.pFIndex = pIndex; // point follow
 					}
 				}
 				else if (this.pFIndex != null){
@@ -182,6 +208,7 @@ window.onload = function() {
 				}
 			}
 			else {
+				window_body.style.backgroundColor = '#5656eb';
 				switch (mouse.state) { 
 					case 0: // left
 						mouse.state = null;
@@ -240,6 +267,7 @@ window.onload = function() {
 	const pointR = 15;
 	const lWidth = 10;
 	let game = new Game();
+	let window_body = document.querySelector("body");
 	let canvas = document.querySelector("canvas");
 	let ctx = canvas.getContext("2d");
 	canvas.width = window.innerWidth;
