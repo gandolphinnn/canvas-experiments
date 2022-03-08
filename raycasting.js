@@ -132,6 +132,11 @@ window.onload = function() {
 	let cvs = { x: canvas.width, y: canvas.height };
 	let walls = new Array();
 	let origin = new Origin(new Point(canvas.width/2, canvas.height/2));
+	walls.push(new Wall(new Point(200, 200), new Point(200, 800)));
+	walls.push(new Wall(new Point(1500, 800), new Point(200, 800)));
+	walls.push(new Wall(new Point(1500, 800), new Point(1500, 650)));
+	walls.push(new Wall(new Point(1500, 200), new Point(1500, 350)));
+	walls.push(new Wall(new Point(200, 200), new Point(1500, 200)));
 	origin.rays.forEach(ray => {
 		ray.calculateEnd();
 	});
