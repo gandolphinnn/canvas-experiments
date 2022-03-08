@@ -1,11 +1,15 @@
 window.onload = function() {
 	document.addEventListener('mousedown', function(e) {
 		if (e.button == 0) {
-			mouse.state = true;
+			mouse.state = 1;
+		}
+		if (e.button == 2) {
+			mouse.state = 2;
 		}
 	});
+	document.addEventListener('contextmenu', event => event.preventDefault());
 	document.addEventListener('mouseup', function(e) {
-		mouse.state = false;
+		mouse.state = 0;
 	});
 	document.addEventListener('mousemove', function(e) {
 		mouse.pos.y = e.clientY;
@@ -19,7 +23,7 @@ window.onload = function() {
 	}
 	let mouse = {
 		pos: new Point(null, null),
-		state: false
+		state: 0
 	}
 	class Wall {
 		constructor(p1, p2) {
@@ -79,7 +83,7 @@ window.onload = function() {
 			for (let i = 0; i < 360; i++) {
 				this.rays.push(new Ray(i));
 				//this.rays.push(new Ray(i+0.25));
-				//this.rays.push(new Ray(i+0.5));
+				this.rays.push(new Ray(i+0.5));
 				//this.rays.push(new Ray(i+0.75));
 			}
 		}
@@ -91,18 +95,31 @@ window.onload = function() {
 			ctx.arc(this.o.x, this.o.y, 10, 0, 2 * Math.PI);
 			ctx.fill();
 		}
-		move() {
-			console.log(mouse.state); // !bug
-			if (mouse.state) {
-				this.o = mouse.pos;
-			}
-		}
 	}
 	function animate() {
 		requestAnimationFrame(animate);
 		ctx.clearRect(0,0, innerWidth, innerHeight);
 		walls.forEach(wall => { wall.draw() });
 		origin.draw();
+		if (mouse.state == 1) {
+			origin.o.x = mouse.pos.x;
+			origin.o.y = mouse.pos.y;
+			origin.rays.forEach(ray => {
+				ray.calculateEnd();
+			});
+		}
+		if (mouse.state == 2) {
+			if (drawLine != null) {
+				walls.push(new Wall(new Point(drawLine.x, drawLine.y), new Point(mouse.pos.x, mouse.pos.y)));
+				origin.rays.forEach(ray => {
+					ray.calculateEnd();
+				});
+				drawLine = null;
+			}
+			else {
+				drawLine = new Point(mouse.pos.x, mouse.pos.y);
+			}
+		}
 	}
 	let canvas = document.querySelector("canvas");
 	let ctx = canvas.getContext("2d");
@@ -111,10 +128,9 @@ window.onload = function() {
 	ctx.fillStyle = 'red';
 	ctx.strokeStyle = 'gray';
 	ctx.lineWidth = '3';
+	let drawLine = null;
 	let cvs = { x: canvas.width, y: canvas.height };
 	let walls = new Array();
-	//walls.push(new Wall(new Point(400, 200), new Point(200, 400)))
-	walls.push(new Wall(new Point(800, 200), new Point(200, 600)))
 	let origin = new Origin(new Point(canvas.width/2, canvas.height/2));
 	origin.rays.forEach(ray => {
 		ray.calculateEnd();
