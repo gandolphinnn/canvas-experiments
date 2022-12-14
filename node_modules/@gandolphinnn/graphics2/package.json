@@ -1,0 +1,11 @@
+{
+  "name": "@gandolphinnn/graphics2",
+  "version": "1.0.0",
+  "description": "functions and classes for 2D graphics using canvas",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "gandolphinnn",
+  "license": "ISC"
+}
